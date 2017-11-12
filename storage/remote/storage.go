@@ -20,6 +20,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
+	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/storage"
 )
 
@@ -101,6 +102,13 @@ func (s *Storage) ApplyConfig(conf *config.Config) error {
 		var q storage.Queryable
 		q = QueryableClient(c)
 		q = ExternablLabelsHandler(q, conf.GlobalConfig.ExternalLabels)
+		if len(rrConf.RequiredMatchers) > 0 {
+			ms := make([]*labels.Matcher, 0, len(rrConf.RequiredMatchers))
+			for k, v := range rrConf.RequiredMatchers {
+				ms[i] = &labels.Matcher{Name: string(k), Value: string(v)}
+			}
+			q = RequiredMatchersFilter(q, ms)
+		}
 		if !rrConf.ReadRecent {
 			q = PreferLocalStorageFilter(q, s.localStartTimeCallback)
 		}
