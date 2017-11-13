@@ -194,8 +194,11 @@ func (q querier) Select(oms ...*labels.Matcher) storage.SeriesSet {
 	for _, om := range oms {
 		ms = append(ms, convertMatcher(om))
 	}
-
-	return seriesSet{set: q.q.Select(ms...)}
+	set, err := q.q.Select(ms...)
+	if err != nil {
+		panic(err)
+	}
+	return seriesSet{set: set}
 }
 
 func (q querier) LabelValues(name string) ([]string, error) { return q.q.LabelValues(name) }
